@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAK Kine - Gestión Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        .bak-green { background-color: #5a8260; }
+        .bak-light { background-color: #f2ecde; }
+        .card-bak { background: white; border-radius: 20px; box-shadow: 0 4px 15px -5px rgba(0,0,0,0.1); }
+        .input-bak { width: 100%; padding: 12px; background: #f9f7f2; border-radius: 12px; border: 1px solid #e2dfd8; outline: none; }
+        /* LOGO MAXIMIZADO */
+        .logo-container { width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; overflow: hidden; border: 2px solid white; }
+        .logo-container img { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body class="bak-light min-h-screen pb-24 font-sans text-stone-800">
+
+    <header class="bak-green p-4 shadow-lg flex justify-between items-center text-white sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="logo-container"><img src="logo.png" alt="BAK"></div>
+            <h1 class="font-bold text-xl tracking-tight">BAK <span class="font-light text-white/80">Kine</span></h1>
+        </div>
+        <span id="total" class="text-[10px] bg-black/20 px-3 py-1 rounded-full font-bold uppercase tracking-widest">Conectando...</span>
+    </header>
+
+    <main id="pantalla-lista" class="max-w-md mx-auto p-4">
+        <div class="relative mb-6">
+            <input type="text" id="busqueda" onkeyup="render()" placeholder="Buscar paciente..." class="w-full p-4 pl-12 rounded-2xl border-none shadow-md outline-none focus:ring-2 focus:ring-green-600">
+            <span class="absolute left-4 top-4 opacity-30">🔍</span>
+        </div>
+        <div id="lista" class="space-y-4"></div>
+        <button onclick="abrirModalNuevo()" class="fixed bottom-8 right-8 bak-green text-white w-16 h-16 rounded-full shadow-2xl text-4xl font-bold">+</button>
+    </main>
+
+    <main id="pantalla-detalle" class="max-w-md mx-auto p-4 hidden">
+        <button onclick="irALista()" class="mb-4 text-stone-500 flex items-center gap-1 font-bold">← Volver</button>
+        <div class="card-bak p-6 mb-6">
+            <div class="flex justify-between items-start mb-4">
+                <h2 class="text-xl font-bold text-[#5a8260]">Ficha Clínica</h2>
+                <button onclick="abrirWsp()" class="bg-green-500 text-white p-2 rounded-full shadow-md">
+                    <svg style="width:24px;height:24px" viewBox="0 0 24 24"><path fill="currentColor" d="M12.04 2C6.5 2 2 6.5 2 12.04C2 13.81 2.46 15.5 3.33 17L2.03 21.97L7.11 20.66C8.56 21.5 10.25 22 12.04 22C17.5 22 22 17.5 22 12.04C22 6.5 17.5 2 12.04 2M12.04 20.11C10.43 20.11 8.91 19.68 7.6 18.91L7.29 18.73L4.25 19.52L5.05 16.56L4.86 16.24C4 14.83 3.56 13.2 3.56 11.53C3.56 6.84 7.36 3.05 12.05 3.05C16.73 3.05 20.53 6.85 20.53 11.54C20.53 16.23 16.73 20.11 12.04 20.11M15.82 13.16C15.61 13.06 14.57 12.55 14.38 12.48C14.19 12.41 14.05 12.37 13.91 12.58C13.77 12.79 13.38 13.26 13.26 13.4C13.14 13.54 13.02 13.56 12.81 13.45C12.6 13.34 11.93 13.12 11.14 12.41C10.52 11.85 10.1 11.17 9.98 10.96C9.86 10.75 9.97 10.64 10.07 10.53C10.17 10.43 10.27 10.3 10.38 10.18C10.48 10.06 10.52 9.97 10.59 9.83C10.66 9.69 10.62 9.57 10.57 9.46C10.52 9.36 10.12 8.37 9.95 7.96C9.79 7.56 9.62 7.62 9.5 7.62C9.38 7.62 9.24 7.62 9.1 7.62C8.96 7.62 8.74 7.67 8.56 7.87C8.38 8.07 7.87 8.56 7.87 9.57C7.87 10.58 8.6 11.55 8.71 11.69C8.81 11.83 10.15 13.89 12.21 14.78C12.7 14.99 13.06 15.11 13.36 15.2C13.86 15.36 14.31 15.34 14.67 15.28C15.08 15.22 15.92 14.77 16.1 14.27C16.27 13.77 16.27 13.34 16.22 13.26C16.17 13.17 16.03 13.12 15.82 13.16Z" /></svg>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <input type="hidden" id="edit-fbkey">
+                <div><label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Nombre Completo *</label><input type="text" id="edit-nom" class="input-bak"></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Edad *</label><input type="number" id="edit-edad" class="input-bak"></div>
+                    <div><label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest">WhatsApp (549...)</label><input type="tel" id="edit-tel" class="input-bak" placeholder="549..."></div>
+                </div>
+                <div><label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Diagnóstico</label><input type="text" id="edit-diag" class="input-bak"></div>
+                <div><label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Antecedentes</label><textarea id="edit-ant" class="input-bak" rows="2"></textarea></div>
+                <div class="flex gap-2 pt-2"><button onclick="actualizarPaciente()" class="flex-1 bak-green text-white py-3 rounded-xl font-bold">Guardar Cambios</button><button onclick="eliminarPaciente()" class="px-4 bg-red-100 text-red-500 rounded-xl">🗑️</button></div>
+            </div>
+        </div>
+        <div class="space-y-4">
+            <h3 class="font-bold text-stone-500 text-xs uppercase px-2 tracking-widest">Evoluciones</h3>
+            <div class="card-bak p-4">
+                <input type="date" id="fecha-nota" class="input-bak mb-2">
+                <textarea id="texto-nota" placeholder="¿Qué trabajamos hoy?..." class="input-bak mb-2" rows="2"></textarea>
+                <button onclick="agregarNota()" class="w-full py-2 border-2 border-[#5a8260] text-[#5a8260] rounded-xl font-bold">Guardar Sesión</button>
+            </div>
+            <div id="notas-lista" class="space-y-3"></div>
+        </div>
+    </main>
+
+    <div id="modal-nuevo" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white w-full max-w-sm rounded-[30px] p-8">
+            <h2 class="text-2xl font-bold mb-6 text-stone-800">Nuevo Registro</h2>
+            <div class="space-y-4">
+                <input type="text" id="nuevo-nom" placeholder="Nombre completo *" class="input-bak">
+                <input type="number" id="nuevo-edad" placeholder="Edad *" class="input-bak">
+                <div class="flex gap-3 pt-2">
+                    <button onclick="cerrarModalNuevo()" class="flex-1 py-4 bg-stone-100 rounded-2xl font-bold">Cancelar</button>
+                    <button onclick="guardarNuevo()" class="flex-1 py-4 bak-green text-white rounded-2xl font-bold">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyB0vjffS2rNP5qwXhlFZfZ3Iay_ZE10j0U",
+            authDomain: "bak-kine.firebaseapp.com",
+            databaseURL: "https://bak-kine-default-rtdb.firebaseio.com/",
+            projectId: "bak-kine",
+            storageBucket: "bak-kine.firebasestorage.app",
+            messagingSenderId: "611797844037",
+            appId: "1:611797844037:web:56c049f07d9ad7a0ad232c"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const dbRef = firebase.database().ref('pacientes');
+        let db = [];
+
+        dbRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            db = data ? Object.keys(data).map(key => ({...data[key], fbKey: key})) : [];
+            render();
+            document.getElementById('total').innerText = db.length + " Pacientes";
+        });
+
+        function render() {
+            const q = document.getElementById('busqueda').value.toLowerCase();
+            const listado = document.getElementById('lista');
+            listado.innerHTML = '';
+            db.filter(p => p.nombre.toLowerCase().includes(q)).forEach(p => {
+                const item = document.createElement('div');
+                item.className = "card-bak p-5 border-l-[6px] border-[#5a8260] cursor-pointer";
+                item.innerHTML = `<div class="flex justify-between items-center"><div><h3 class="font-bold text-stone-800">${p.nombre}</h3><p class="text-xs text-stone-400">${p.diagnostico || 'Ver ficha'}</p></div><span class="text-stone-300">→</span></div>`;
+                item.onclick = () => verDetalle(p.fbKey);
+                listado.appendChild(item);
+            });
+        }
+
+        function abrirModalNuevo() { document.getElementById('modal-nuevo').classList.remove('hidden'); }
+        function cerrarModalNuevo() { document.getElementById('modal-nuevo').classList.add('hidden'); }
+
+        function guardarNuevo() {
+            const nom = document.getElementById('nuevo-nom').value;
+            const edad = document.getElementById('nuevo-edad').value;
+            if(!nom || !edad) return alert("Completá los campos obligatorios");
+            dbRef.push({ nombre: nom, edad: edad, notes: [] });
+            cerrarModalNuevo();
+            document.getElementById('nuevo-nom').value = '';
+            document.getElementById('nuevo-edad').value = '';
+        }
+
+        function verDetalle(fbKey) {
+            const p = db.find(x => x.fbKey == fbKey);
+            document.getElementById('edit-fbkey').value = fbKey;
+            document.getElementById('edit-nom').value = p.nombre;
+            document.getElementById('edit-edad').value = p.edad;
+            document.getElementById('edit-tel').value = p.tel || '';
+            document.getElementById('edit-diag').value = p.diagnostico || '';
+            document.getElementById('edit-ant').value = p.antecedentes || '';
+            document.getElementById('fecha-nota').value = new Date().toISOString().split('T')[0];
+            renderNotas(p.notes || []);
+            document.getElementById('pantalla-lista').classList.add('hidden');
+            document.getElementById('pantalla-detalle').classList.remove('hidden');
+        }
+
+        function actualizarPaciente() {
+            const key = document.getElementById('edit-fbkey').value;
+            firebase.database().ref('pacientes/' + key).update({
+                nombre: document.getElementById('edit-nom').value,
+                edad: document.getElementById('edit-edad').value,
+                tel: document.getElementById('edit-tel').value,
+                diagnostico: document.getElementById('edit-diag').value,
+                antecedentes: document.getElementById('edit-ant').value
+            });
+            alert("¡Datos actualizados!");
+        }
+
+        function agregarNota() {
+            const key = document.getElementById('edit-fbkey').value;
+            const t = document.getElementById('texto-nota').value;
+            if(!t) return;
+            const p = db.find(x => x.fbKey == key);
+            const notes = p.notes || [];
+            notes.unshift({ fecha: document.getElementById('fecha-nota').value, texto: t });
+            firebase.database().ref('pacientes/' + key).update({ notes: notes });
+            document.getElementById('texto-nota').value = '';
+        }
+
+        function renderNotas(notas) {
+            document.getElementById('notas-lista').innerHTML = notas.map(n => `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-stone-200">
+                    <p class="text-[10px] font-bold text-green-700 uppercase">${n.fecha}</p>
+                    <p class="text-sm text-stone-600">${n.texto}</p>
+                </div>`).join('');
+        }
+
+        function abrirWsp() {
+            const t = document.getElementById('edit-tel').value;
+            if(t) window.open(`https://wa.me/${t}`, '_blank');
+        }
+
+        function irALista() {
+            document.getElementById('pantalla-lista').classList.remove('hidden');
+            document.getElementById('pantalla-detalle').classList.add('hidden');
+        }
+
+        function eliminarPaciente() {
+            if(confirm("¿Eliminar historial?")) {
+                firebase.database().ref('pacientes/' + document.getElementById('edit-fbkey').value).remove();
+                irALista();
+            }
+        }
+    </script>
+</body>
+</html>
