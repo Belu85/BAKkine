@@ -247,19 +247,26 @@
     const t = document.getElementById('edit-tel').value; 
     if(!t) return alert("Carga un número primero");
 
-    // Limpiamos el número (solo números)
     const numLimpio = t.replace(/\D/g, ''); 
     
-    // Este enlace intenta abrir la App de WhatsApp directamente
-    // En muchos teléfonos, si tienes ambos, te deja elegir o prioriza el Business
-    const url = `whatsapp://send?phone=${numLimpio}`;
+    // Intentamos el link de intención específico para Android que suele abrir Business
+    const intentUrl = `intent://send/${numLimpio}#Intent;scheme=smsto;package=com.whatsapp.w4b;action=android.intent.action.SENDTO;end`;
     
-    window.location.href = url; 
+    // Y el link universal de respaldo
+    const universalUrl = `https://wa.me/${numLimpio}`;
 
-    // Si el teléfono no responde al comando anterior en 500ms, intenta el link normal
-    setTimeout(() => {
-        window.open(`https://wa.me/${numLimpio}`, '_blank');
-    }, 500);
+    // Detectamos si es Android para intentar forzar el Business (W4B)
+    if (navigator.userAgent.toLowerCase().indexOf("android") > -1) {
+        window.location.href = intentUrl;
+        
+        // Si no se abre en 1 segundo (porque no es Android o falló), usa el normal
+        setTimeout(() => {
+            window.location.href = universalUrl;
+        }, 1000);
+    } else {
+        // En iPhone el manejo es distinto, usamos el universal
+        window.location.href = universalUrl;
+    }
 }
         function eliminarPaciente() { if(confirm("¿Eliminar?")) { firebase.database().ref('pacientes/' + document.getElementById('edit-fbkey').value).remove(); irALista(); } }
     </script>
