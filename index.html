@@ -243,7 +243,24 @@
         function renderNotas(notas) {
             document.getElementById('notas-lista').innerHTML = notas.map(n => `<div class="card-bak p-4 border-l-4 border-stone-200"><p class="text-[10px] font-bold text-green-700 uppercase">${n.fecha}</p><p class="text-sm text-stone-600">${n.texto}</p></div>`).join('');
         }
-        function abrirWsp() { const t = document.getElementById('edit-tel').value; if(t) window.open(`https://wa.me/${t}`, '_blank'); }
+        function abrirWsp() { 
+    const t = document.getElementById('edit-tel').value; 
+    if(!t) return alert("Carga un número primero");
+
+    // Limpiamos el número (solo números)
+    const numLimpio = t.replace(/\D/g, ''); 
+    
+    // Este enlace intenta abrir la App de WhatsApp directamente
+    // En muchos teléfonos, si tienes ambos, te deja elegir o prioriza el Business
+    const url = `whatsapp://send?phone=${numLimpio}`;
+    
+    window.location.href = url; 
+
+    // Si el teléfono no responde al comando anterior en 500ms, intenta el link normal
+    setTimeout(() => {
+        window.open(`https://wa.me/${numLimpio}`, '_blank');
+    }, 500);
+}
         function eliminarPaciente() { if(confirm("¿Eliminar?")) { firebase.database().ref('pacientes/' + document.getElementById('edit-fbkey').value).remove(); irALista(); } }
     </script>
 </body>
