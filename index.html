@@ -3,10 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BAK Kine - Evaluación Profesional</title>
+    <title>BAK Kine - Pro</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="logo.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
         .bak-green { background-color: #5a8260; }
         .bak-light { background-color: #f2ecde; }
@@ -14,7 +20,7 @@
         .input-bak { width: 100%; padding: 12px; background: #f9f7f2; border-radius: 12px; border: 1px solid #e2dfd8; outline: none; margin-bottom: 8px; }
         .logo-container { width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; overflow: hidden; border: 2px solid white; }
         .logo-container img { width: 100%; height: 100%; object-fit: cover; }
-        .btn-tab { padding: 10px; border-radius: 10px; font-weight: bold; font-size: 12px; transition: 0.3s; background: #e2dfd8; }
+        .btn-tab { padding: 10px; border-radius: 10px; font-weight: bold; font-size: 11px; transition: 0.3s; background: #e2dfd8; color: #78716c; }
         .btn-tab.active { background: #5a8260; color: white; }
     </style>
 </head>
@@ -25,7 +31,7 @@
             <div class="logo-container"><img src="logo.png" alt="BAK"></div>
             <h1 class="font-bold text-xl tracking-tight">BAK <span class="font-light text-white/80">Kine</span></h1>
         </div>
-        <span id="total" class="text-[10px] bg-black/20 px-3 py-1 rounded-full font-bold uppercase tracking-widest uppercase">Cargando...</span>
+        <span id="total" class="text-[10px] bg-black/20 px-3 py-1 rounded-full font-bold uppercase tracking-widest">Cargando...</span>
     </header>
 
     <main id="pantalla-lista" class="max-w-md mx-auto p-4">
@@ -38,26 +44,25 @@
     </main>
 
     <main id="pantalla-detalle" class="max-w-md mx-auto p-4 hidden">
-        <button onclick="irALista()" class="mb-4 text-stone-500 flex items-center gap-1 font-bold">← Volver</button>
+        <div class="flex justify-between items-center mb-4">
+            <button onclick="irALista()" class="text-stone-500 font-bold">← Volver</button>
+            <button onclick="generarPDF()" class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-bold">PDF INFORME 📄</button>
+        </div>
         
-        <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+        <div class="flex gap-1 mb-4 overflow-x-auto pb-2">
             <button id="tab-datos" onclick="switchTab('datos')" class="btn-tab active">DATOS</button>
             <button id="tab-evolucion" onclick="switchTab('evolucion')" class="btn-tab">EVOLUCIÓN</button>
-            <button id="tab-evaluacion" onclick="switchTab('evaluacion')" class="btn-tab">EVALUACIÓN TÉCNICA</button>
+            <button id="tab-evaluacion" onclick="switchTab('evaluacion')" class="btn-tab">EVAL. TÉCNICA</button>
         </div>
 
         <div id="sec-datos" class="card-bak p-6">
-            <h2 class="text-xl font-bold text-[#5a8260] mb-4">Información</h2>
             <input type="hidden" id="edit-fbkey">
-            <label class="text-[10px] font-bold text-stone-400 uppercase">Nombre</label><input type="text" id="edit-nom" class="input-bak">
-            <label class="text-[10px] font-bold text-stone-400 uppercase">WhatsApp</label><input type="tel" id="edit-tel" class="input-bak" placeholder="549...">
-            <label class="text-[10px] font-bold text-stone-400 uppercase">Diagnóstico Médico</label><input type="text" id="edit-diag" class="input-bak">
-            <label class="text-[10px] font-bold text-stone-400 uppercase">Antecedentes</label><textarea id="edit-ant" class="input-bak" rows="3"></textarea>
-            <div class="flex gap-2 pt-2">
-                <button onclick="actualizarPaciente()" class="flex-1 bak-green text-white py-3 rounded-xl font-bold">Actualizar</button>
-                <button onclick="abrirWsp()" class="bg-green-500 text-white p-3 rounded-xl shadow-md">WSP</button>
-            </div>
-            <button onclick="eliminarPaciente()" class="w-full mt-4 text-xs text-red-400">Eliminar Paciente</button>
+            <label class="text-[10px] font-bold text-stone-400">NOMBRE</label><input type="text" id="edit-nom" class="input-bak">
+            <label class="text-[10px] font-bold text-stone-400">TELÉFONO</label><input type="tel" id="edit-tel" class="input-bak">
+            <label class="text-[10px] font-bold text-stone-400">DIAGNÓSTICO MÉDICO</label><input type="text" id="edit-diag" class="input-bak">
+            <label class="text-[10px] font-bold text-stone-400">ANTECEDENTES</label><textarea id="edit-ant" class="input-bak" rows="2"></textarea>
+            <div class="flex gap-2"><button onclick="actualizarPaciente()" class="flex-1 bak-green text-white py-3 rounded-xl font-bold">Actualizar</button><button onclick="abrirWsp()" class="bg-green-500 text-white p-3 rounded-xl">WSP</button></div>
+            <button onclick="eliminarPaciente()" class="w-full mt-4 text-[10px] text-red-300 uppercase font-bold tracking-widest">Eliminar Ficha</button>
         </div>
 
         <div id="sec-evolucion" class="hidden space-y-4">
@@ -70,10 +75,14 @@
         </div>
 
         <div id="sec-evaluacion" class="hidden space-y-4">
+            <div class="card-bak p-2 bg-white text-center">
+                <p class="text-[9px] font-bold text-stone-400 mb-1">MAPA CORPORAL DE REFERENCIA</p>
+                <img src="https://cdn-icons-png.flaticon.com/512/3022/3022313.png" class="h-40 mx-auto opacity-80" alt="Body Map">
+            </div>
+
             <div class="card-bak p-4">
-                <h3 class="font-bold mb-3">Nueva Evaluación Física</h3>
                 <select id="eval-zona" class="input-bak" onchange="cambiarCamposEvaluacion()">
-                    <option value="">Seleccionar Zona...</option>
+                    <option value="">Seleccionar Zona a Evaluar...</option>
                     <option value="hombro">Hombro</option>
                     <option value="cervical">Cervical</option>
                     <option value="lumbar">Lumbar</option>
@@ -81,9 +90,8 @@
                     <option value="cadera">Cadera</option>
                     <option value="tobillo">Tobillo</option>
                 </select>
-                <div id="campos-especificos" class="bg-stone-50 p-3 rounded-xl mb-3 hidden">
-                    </div>
-                <button id="btn-guardar-eval" class="hidden w-full py-3 bg-blue-600 text-white rounded-xl font-bold" onclick="guardarEvaluacion()">Registrar Evaluación</button>
+                <div id="campos-especificos" class="bg-stone-50 p-3 rounded-xl mb-3 hidden"></div>
+                <button id="btn-guardar-eval" class="hidden w-full py-3 bg-blue-600 text-white rounded-xl font-bold" onclick="guardarEvaluacion()">Registrar Evaluación Física</button>
             </div>
             <div id="eval-historial" class="space-y-3"></div>
         </div>
@@ -95,7 +103,7 @@
             <input type="text" id="nuevo-nom" placeholder="Nombre completo *" class="input-bak">
             <input type="number" id="nuevo-edad" placeholder="Edad *" class="input-bak">
             <div class="flex gap-3 mt-4">
-                <button onclick="cerrarModalNuevo()" class="flex-1 py-4 bg-stone-100 rounded-2xl">Cancelar</button>
+                <button onclick="cerrarModalNuevo()" class="flex-1 py-4 bg-stone-100 rounded-2xl">Volver</button>
                 <button onclick="guardarNuevo()" class="flex-1 py-4 bak-green text-white rounded-2xl font-bold">Crear</button>
             </div>
         </div>
@@ -111,39 +119,16 @@
             messagingSenderId: "611797844037",
             appId: "1:611797844037:web:56c049f07d9ad7a0ad232c"
         };
-
         firebase.initializeApp(firebaseConfig);
         const dbRef = firebase.database().ref('pacientes');
         let db = [];
         const testsConfig = {
-            hombro: [
-                { id:'jobe', n:'Jobe (Empty Can)', d:'Brazos 90° abd, 30° horiz y rot. interna. Presión hacia abajo. (+) Dolor/debilidad = Supraespinoso.' },
-                { id:'hawkins', n:'Hawkins-Kennedy', d:'Brazo flex 90°, codo 90°. Rotación interna pasiva rápida. (+) Dolor = Pinzamiento subacromial.' },
-                { id:'arco', n:'Arco Doloroso', d:'Abducción activa. (+) Dolor entre 60° y 120°.' }
-            ],
-            cervical: [
-                { id:'spurling', n:'Spurling', d:'Inclinación lateral y presión axial sobre cabeza. (+) Dolor irradiado = Compromiso radicular.' },
-                { id:'distraccion', n:'Distracción', d:'Tracción ascendente manual de la cabeza. (+) Alivio del dolor = Compresión nerviosa.' },
-                { id:'rom', n:'Rango de Movimiento', d:'Evaluar flexión, extensión y rotaciones. Valor esperado: Movimiento fluido sin mareos.' }
-            ],
-            lumbar: [
-                { id:'lasegue', n:'Lasegue (SLR)', d:'Elevación de pierna extendida. (+) Dolor irradiado entre 30° y 70° = Ciática/Hernia.' },
-                { id:'bragard', n:'Bragard', d:'Lasegue + Dorsiflexión del pie. (+) Aumento de dolor = Origen radicular.' },
-                { id:'psoas', n:'Psoas Test', d:'Resistencia a la flexión de cadera. (+) Dolor = Irritación del psoas o zona lumbar.' }
-            ],
-            rodilla: [
-                { id:'lachman', n:'Lachman', d:'Rodilla en 20-30° flex. Tracción anterior de tibia. (+) Desplazamiento = LCA.' },
-                { id:'cajon', n:'Cajón Anterior', d:'Rodilla 90° flex. Tracción anterior tibia. (+) Laxitud = LCA.' },
-                { id:'mcmurray', n:'McMurray', d:'Flexión máxima + rotación y extensión. (+) Chasquido/Dolor = Meniscos.' }
-            ],
-            cadera: [
-                { id:'faber', n:'Faber (Patrick)', d:'Flexión, Abducción, Ext. Rot (4 sobre la otra pierna). (+) Dolor = Art. Sacroilíaca o cadera.' },
-                { id:'fadir', n:'Fadir', d:'Flexión, Aducción, Int. Rot. (+) Dolor = Choque femoroacetabular.' }
-            ],
-            tobillo: [
-                { id:'cajonant', n:'Cajón Anterior Tobillo', d:'Tracción anterior del astrágalo. (+) Desplazamiento = Lig. Peroneoastragalino anterior.' },
-                { id:'thompson', n:'Thompson', d:'Presión en gemelo con paciente boca abajo. (+) Ausencia de plantiflexión = Rotura Tendón Aquiles.' }
-            ]
+            hombro: [{id:'jobe', n:'Jobe (Supraespinoso)', d:'(+) Dolor/debilidad al bajar brazos en rot. interna.'}, {id:'hawkins', n:'Hawkins-Kennedy', d:'(+) Dolor al rotar hombro en flexión 90°.'}, {id:'arco', n:'Arco Doloroso', d:'Dolor entre 60° y 120° de abducción.'}],
+            cervical: [{id:'spurling', n:'Spurling', d:'(+) Dolor irradiado al presionar cabeza hacia el lado.'}, {id:'distraccion', n:'Distracción', d:'(+) Alivio al traccionar cabeza hacia arriba.'}, {id:'rom', n:'ROM Cervical', d:'Evaluar rangos de rotación y flexo-extensión.'}],
+            lumbar: [{id:'lasegue', n:'Lasegue (SLR)', d:'(+) Dolor ciático entre 30-70° de elevación pierna.'}, {id:'psoas', n:'Psoas Test', d:'Dolor lumbar al resistir flexión de cadera.'}],
+            rodilla: [{id:'lachman', n:'Lachman (LCA)', d:'Traslación anterior tibia en 30° flex.'}, {id:'mcmurray', n:'McMurray (Meniscos)', d:'Chasquido en flexión y rotación.'}],
+            cadera: [{id:'faber', n:'Faber', d:'Dolor sacroilíaco en posición de 4.'}],
+            tobillo: [{id:'cajon', n:'Cajón Anterior', d:'Laxitud ligamentaria anterior.'}, {id:'thompson', n:'Thompson', d:'Evaluar integridad de Tendón de Aquiles.'}]
         };
 
         dbRef.on('value', (snapshot) => {
@@ -160,7 +145,7 @@
             db.filter(p => p.nombre.toLowerCase().includes(q)).forEach(p => {
                 const item = document.createElement('div');
                 item.className = "card-bak p-5 border-l-[6px] border-[#5a8260] cursor-pointer active:scale-95 transition-all";
-                item.innerHTML = `<div><h3 class="font-bold text-lg">${p.nombre}</h3><p class="text-xs text-stone-400 uppercase tracking-tighter">${p.diagnostico || 'SIN DIAGNÓSTICO'}</p></div>`;
+                item.innerHTML = `<div><h3 class="font-bold text-lg">${p.nombre}</h3><p class="text-xs text-stone-400 uppercase">${p.diagnostico || 'SIN DIAGNÓSTICO'}</p></div>`;
                 item.onclick = () => verDetalle(p.fbKey);
                 listado.appendChild(item);
             });
@@ -186,24 +171,13 @@
             const container = document.getElementById('campos-especificos');
             const btn = document.getElementById('btn-guardar-eval');
             if(!zona) { container.classList.add('hidden'); btn.classList.add('hidden'); return; }
-            
-            container.innerHTML = `<h4 class="text-[10px] font-bold text-blue-600 mb-2 uppercase">Tests para ${zona}</h4>`;
+            container.innerHTML = `<h4 class="text-[10px] font-bold text-blue-600 mb-2 uppercase italic">Evaluando ${zona}...</h4>`;
             testsConfig[zona].forEach(t => {
-                container.innerHTML += `
-                    <div class="mb-4 border-b border-stone-200 pb-2">
-                        <p class="text-xs font-bold">${t.n}</p>
-                        <p class="text-[9px] text-stone-500 mb-2 italic">${t.d}</p>
-                        <select id="test-${t.id}" class="w-full p-2 text-xs rounded-lg border border-stone-300">
-                            <option value="Negativo">Negativo (Normal)</option>
-                            <option value="Positivo">Positivo (+)</option>
-                            <option value="Dudoso">Dudoso / Doloroso</option>
-                            <option value="No realizado">No realizado</option>
-                        </select>
-                    </div>`;
+                container.innerHTML += `<div class="mb-3"><p class="text-xs font-bold">${t.n}</p><p class="text-[9px] text-stone-400 mb-1">${t.d}</p>
+                <select id="test-${t.id}" class="w-full p-2 text-xs rounded-lg border border-stone-300"><option value="Negativo">Negativo</option><option value="Positivo">Positivo</option><option value="Dudoso">Dudoso</option></select></div>`;
             });
-            container.innerHTML += `<textarea id="eval-obs" placeholder="Observaciones extras..." class="input-bak text-xs"></textarea>`;
-            container.classList.remove('hidden');
-            btn.classList.remove('hidden');
+            container.innerHTML += `<textarea id="eval-obs" placeholder="Observaciones de la evaluación..." class="input-bak text-xs"></textarea>`;
+            container.classList.remove('hidden'); btn.classList.remove('hidden');
         }
 
         function guardarEvaluacion() {
@@ -211,81 +185,66 @@
             const zona = document.getElementById('eval-zona').value;
             const p = db.find(x => x.fbKey == key);
             const evaluaciones = p.evaluaciones || [];
-            
-            let resultados = { zona: zona, fecha: new Date().toLocaleDateString(), tests: {} };
-            testsConfig[zona].forEach(t => {
-                resultados.tests[t.n] = document.getElementById(`test-${t.id}`).value;
-            });
-            resultados.observaciones = document.getElementById('eval-obs').value;
-
-            evaluaciones.unshift(resultados);
+            let res = { zona: zona, fecha: new Date().toLocaleDateString(), tests: {} };
+            testsConfig[zona].forEach(t => { res.tests[t.n] = document.getElementById(`test-${t.id}`).value; });
+            res.observaciones = document.getElementById('eval-obs').value;
+            evaluaciones.unshift(res);
             firebase.database().ref('pacientes/' + key).update({ evaluaciones: evaluaciones });
-            
-            document.getElementById('eval-zona').value = '';
-            cambiarCamposEvaluacion();
-            alert("Evaluación técnica guardada.");
+            document.getElementById('eval-zona').value = ''; cambiarCamposEvaluacion();
         }
 
         function renderEvalHistorial(evals) {
-            document.getElementById('eval-historial').innerHTML = evals.map(e => `
-                <div class="card-bak p-4 bg-blue-50/50 border border-blue-100">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="font-bold text-blue-700 uppercase text-xs">${e.zona}</span>
-                        <span class="text-[10px] text-stone-400">${e.fecha}</span>
-                    </div>
-                    <div class="text-[11px] space-y-1">
-                        ${Object.entries(e.tests).map(([name, val]) => `<div><strong>${name}:</strong> ${val}</div>`).join('')}
-                    </div>
-                    ${e.observaciones ? `<p class="text-[10px] mt-2 bg-white p-2 rounded italic text-stone-500">Obs: ${e.observaciones}</p>` : ''}
-                </div>`).join('');
+            document.getElementById('eval-historial').innerHTML = evals.map(e => `<div class="card-bak p-4 bg-blue-50/30 border border-blue-100"><div class="flex justify-between mb-2"><span class="font-bold text-blue-800 uppercase text-[10px]">${e.zona}</span><span class="text-[9px] text-stone-400">${e.fecha}</span></div>
+            <div class="text-[10px]">${Object.entries(e.tests).map(([n, v]) => `<div><b>${n}:</b> ${v}</div>`).join('')}</div></div>`).join('');
+        }
+
+        function generarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const p = db.find(x => x.fbKey == document.getElementById('edit-fbkey').value);
+            
+            doc.setFontSize(20); doc.setTextColor(90, 130, 96); doc.text("INFORME KINÉSICO - BAK KINE", 20, 20);
+            doc.setFontSize(12); doc.setTextColor(0, 0, 0); doc.text(`Paciente: ${p.nombre}`, 20, 35);
+            doc.text(`Diagnóstico Médico: ${p.diagnostico || 'No especificado'}`, 20, 42);
+            doc.text(`Fecha del informe: ${new Date().toLocaleDateString()}`, 20, 49);
+            
+            doc.setFontSize(14); doc.text("Última Evaluación Física:", 20, 65);
+            if(p.evaluaciones && p.evaluaciones.length > 0) {
+                const ult = p.evaluaciones[0];
+                doc.setFontSize(11); doc.text(`Zona: ${ult.zona.toUpperCase()} (${ult.fecha})`, 25, 75);
+                let y = 82;
+                Object.entries(ult.tests).forEach(([n, v]) => { doc.text(`${n}: ${v}`, 30, y); y += 7; });
+            } else { doc.text("Sin evaluaciones registradas.", 25, 75); }
+            
+            doc.save(`Informe_${p.nombre}.pdf`);
         }
 
         function switchTab(tab) {
-            ['datos', 'evolucion', 'evaluacion'].forEach(t => {
-                document.getElementById('sec-' + t).classList.add('hidden');
-                document.getElementById('tab-' + t).classList.remove('active');
-            });
-            document.getElementById('sec-' + tab).classList.remove('hidden');
-            document.getElementById('tab-' + tab).classList.add('active');
+            ['datos', 'evolucion', 'evaluacion'].forEach(t => { document.getElementById('sec-' + t).classList.add('hidden'); document.getElementById('tab-' + t).classList.remove('active'); });
+            document.getElementById('sec-' + tab).classList.remove('hidden'); document.getElementById('tab-' + tab).classList.add('active');
         }
 
-        // --- FUNCIONES BÁSICAS (IGUAL QUE ANTES) ---
         function irALista() { document.getElementById('pantalla-lista').classList.remove('hidden'); document.getElementById('pantalla-detalle').classList.add('hidden'); }
         function abrirModalNuevo() { document.getElementById('modal-nuevo').classList.remove('hidden'); }
         function cerrarModalNuevo() { document.getElementById('modal-nuevo').classList.add('hidden'); }
         function guardarNuevo() {
-            const nom = document.getElementById('nuevo-nom').value;
-            const edad = document.getElementById('nuevo-edad').value;
+            const nom = document.getElementById('nuevo-nom').value; const edad = document.getElementById('nuevo-edad').value;
             if(!nom || !edad) return alert("Faltan datos");
-            dbRef.push({ nombre: nom, edad: edad, notes: [], evaluaciones: [] });
-            cerrarModalNuevo();
+            dbRef.push({ nombre: nom, edad: edad, notes: [], evaluaciones: [] }); cerrarModalNuevo();
         }
         function actualizarPaciente() {
             const key = document.getElementById('edit-fbkey').value;
-            firebase.database().ref('pacientes/' + key).update({
-                nombre: document.getElementById('edit-nom').value,
-                tel: document.getElementById('edit-tel').value,
-                diagnostico: document.getElementById('edit-diag').value,
-                antecedentes: document.getElementById('edit-ant').value
-            });
-            alert("Sincronizado");
+            firebase.database().ref('pacientes/' + key).update({ nombre: document.getElementById('edit-nom').value, tel: document.getElementById('edit-tel').value, diagnostico: document.getElementById('edit-diag').value, antecedentes: document.getElementById('edit-ant').value });
+            alert("¡Datos Guardados!");
         }
         function agregarNota() {
-            const key = document.getElementById('edit-fbkey').value;
-            const t = document.getElementById('texto-nota').value;
-            if(!t) return;
-            const p = db.find(x => x.fbKey == key);
-            const notes = p.notes || [];
+            const key = document.getElementById('edit-fbkey').value; const t = document.getElementById('texto-nota').value; if(!t) return;
+            const p = db.find(x => x.fbKey == key); const notes = p.notes || [];
             notes.unshift({ fecha: document.getElementById('fecha-nota').value, texto: t });
-            firebase.database().ref('pacientes/' + key).update({ notes: notes });
-            document.getElementById('texto-nota').value = '';
+            firebase.database().ref('pacientes/' + key).update({ notes: notes }); document.getElementById('texto-nota').value = '';
         }
         function renderNotas(notas) {
-            document.getElementById('notas-lista').innerHTML = notas.map(n => `
-                <div class="card-bak p-4 border-l-4 border-stone-200">
-                    <p class="text-[10px] font-bold text-green-700 uppercase">${n.fecha}</p>
-                    <p class="text-sm text-stone-600">${n.texto}</p>
-                </div>`).join('');
+            document.getElementById('notas-lista').innerHTML = notas.map(n => `<div class="card-bak p-4 border-l-4 border-stone-200"><p class="text-[10px] font-bold text-green-700 uppercase">${n.fecha}</p><p class="text-sm text-stone-600">${n.texto}</p></div>`).join('');
         }
         function abrirWsp() { const t = document.getElementById('edit-tel').value; if(t) window.open(`https://wa.me/${t}`, '_blank'); }
         function eliminarPaciente() { if(confirm("¿Eliminar?")) { firebase.database().ref('pacientes/' + document.getElementById('edit-fbkey').value).remove(); irALista(); } }
